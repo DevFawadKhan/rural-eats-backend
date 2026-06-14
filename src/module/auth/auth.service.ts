@@ -44,6 +44,9 @@ export class AuthService {
     });
     
     if (customer) {
+      if (!customer.passwordHash) {
+        throw new UnauthorizedException('Account not fully registered. Please sign up first.');
+      }
       const isPasswordValid = await bcrypt.compare(password, customer.passwordHash);
       
       if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');

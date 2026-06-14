@@ -16,6 +16,11 @@ const storage = diskStorage({
   }
 });
 
+const parseBoolean = (val: any, defaultVal: boolean): boolean => {
+  if (val === undefined) return defaultVal;
+  return val === 'true' || val === true;
+};
+
 @Controller('menus')
 export class MenusController {
   constructor(private readonly menusService: MenusService) {}
@@ -31,16 +36,16 @@ export class MenusController {
   async create(@Body() createDto: CreateMenuDto, @UploadedFiles() files: Express.Multer.File[]) {
     const imagePaths = files ? files.map(file => `/uploads/images/menus/${file.filename}`) : [];
     
-    let isAvailable = true;
-    if (createDto.isAvailable !== undefined) {
-      isAvailable = createDto.isAvailable === 'true' || createDto.isAvailable === true;
-    }
-
     const data = {
       name: createDto.name,
+      categoryId: createDto.categoryId,
       description: createDto.description,
-      price: createDto.price.toString(),
-      isAvailable,
+      isActive: parseBoolean(createDto.isActive, true),
+      hasSizes: parseBoolean(createDto.hasSizes, false),
+      standardPrice: createDto.standardPrice ? createDto.standardPrice.toString() : null,
+      priceSmall: createDto.priceSmall ? createDto.priceSmall.toString() : null,
+      priceMedium: createDto.priceMedium ? createDto.priceMedium.toString() : null,
+      priceLarge: createDto.priceLarge ? createDto.priceLarge.toString() : null,
       images: imagePaths,
     };
 
@@ -57,11 +62,16 @@ export class MenusController {
   ) {
     const updateData: any = {};
     if (updateDto.name !== undefined) updateData.name = updateDto.name;
+    if (updateDto.categoryId !== undefined) updateData.categoryId = updateDto.categoryId;
     if (updateDto.description !== undefined) updateData.description = updateDto.description;
-    if (updateDto.price !== undefined) updateData.price = updateDto.price.toString();
-    if (updateDto.isAvailable !== undefined) {
-      updateData.isAvailable = updateDto.isAvailable === 'true' || updateDto.isAvailable === true;
-    }
+    
+    if (updateDto.isActive !== undefined) updateData.isActive = parseBoolean(updateDto.isActive, true);
+    if (updateDto.hasSizes !== undefined) updateData.hasSizes = parseBoolean(updateDto.hasSizes, false);
+    
+    if (updateDto.standardPrice !== undefined) updateData.standardPrice = updateDto.standardPrice ? updateDto.standardPrice.toString() : null;
+    if (updateDto.priceSmall !== undefined) updateData.priceSmall = updateDto.priceSmall ? updateDto.priceSmall.toString() : null;
+    if (updateDto.priceMedium !== undefined) updateData.priceMedium = updateDto.priceMedium ? updateDto.priceMedium.toString() : null;
+    if (updateDto.priceLarge !== undefined) updateData.priceLarge = updateDto.priceLarge ? updateDto.priceLarge.toString() : null;
 
     if (files && files.length > 0) {
       updateData.images = files.map(file => `/uploads/images/menus/${file.filename}`);

@@ -6,3 +6,7 @@ export * from './order-items.schema';
 export * from './permissions.schema';
 export * from './user-permissions.schema';
 export * from './logs.schema';
+export * from './categories.schema';
+export * from './deals.schema';
+export * from './expense-categories.schema';
+export * from './expenses.schema';

@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, numeric, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, numeric, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { customersTable } from './customers.schema';
 import { orderItemsTable } from './order-items.schema';
@@ -9,6 +9,7 @@ export const ordersTable = pgTable('orders', {
   customerId: integer('customer_id').notNull().references(() => customersTable.id),
   status: varchar('status', { length: 50 }).default('pending').notNull(),
   totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
+  isTakeaway: boolean('is_takeaway').default(false).notNull(),
   createdByUserId: integer('created_by_user_id').references(() => usersTable.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

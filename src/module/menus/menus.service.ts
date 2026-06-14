@@ -5,25 +5,29 @@ import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class MenusService {
-  async createMenu(data: any) {
-    const newMenu = await db.insert(menusTable).values(data).returning();
-    return newMenu[0];
+  async createMenu(data: typeof menusTable.$inferInsert) {
+    const [newMenu] = await db.insert(menusTable).values(data).returning();
+    return newMenu;
   }
 
   async getAllMenus() {
-    return db.query.menusTable.findMany();
+    return db.query.menusTable.findMany({
+      with: {
+        category: true,
+      }
+    });
   }
 
-  async updateMenu(id: number, data: any) {
-    const updated = await db.update(menusTable)
+  async updateMenu(id: number, data: Partial<typeof menusTable.$inferInsert>) {
+    const [updatedMenu] = await db.update(menusTable)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(menusTable.id, id))
       .returning();
 
-    if (updated.length === 0) {
+    if (!updatedMenu) {
       throw new NotFoundException('Menu item not found');
     }
-    return updated[0];
+    return updatedMenu;
   }
 
   async deleteMenu(id: number) {

@@ -1,0 +1,1 @@
+ALTER TABLE "deal_items" ADD COLUMN "size" varchar(50);
