@@ -3,11 +3,8 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-import * as fs from 'fs';
-import * as path from 'path';
-
 // Load CA certificate (Aiven SSL)
-const caCert = fs.readFileSync(path.join(process.cwd(), 'ca.pem')).toString();
+const caCert = process.env.DB_CA?.replace(/\\n/g, '\n');
 
 export default defineConfig({
   schema: './src/db/schema/index.ts',
