@@ -1,19 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, ParseIntPipe, Query, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname } from 'path';
+import { put } from '@vercel/blob';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import type { Response } from 'express';
 
-const storage = diskStorage({
-  destination: './uploads/images/expenses',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-  }
-});
+const storage = memoryStorage();
 
 @Controller('expenses')
 export class ExpensesController {
@@ -21,13 +16,21 @@ export class ExpensesController {
 
   @Post()
   @UseInterceptors(FileInterceptor('attachment', { storage }))
-  create(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
+  async create(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
+    let attachmentUrl: string | undefined = undefined;
+    if (file) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+      const blob = await put(`expenses/${filename}`, file.buffer, { access: 'public' });
+      attachmentUrl = blob.url;
+    }
+
     const createDto: CreateExpenseDto = {
       description: body.description,
       amount: Number(body.amount),
       categoryId: Number(body.categoryId),
       expenseDate: body.expenseDate,
-      attachmentUrl: file ? `/uploads/images/expenses/${file.filename}` : undefined,
+      attachmentUrl,
     };
     return this.expensesService.create(createDto);
   }
@@ -71,7 +74,7 @@ export class ExpensesController {
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('attachment', { storage }))
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: any, @UploadedFile() file: Express.Multer.File) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() body: any, @UploadedFile() file: Express.Multer.File) {
     const updateDto: UpdateExpenseDto = {};
     if (body.description !== undefined) updateDto.description = body.description;
     if (body.amount !== undefined) updateDto.amount = Number(body.amount);
@@ -79,7 +82,10 @@ export class ExpensesController {
     if (body.expenseDate !== undefined) updateDto.expenseDate = body.expenseDate;
     
     if (file) {
-      updateDto.attachmentUrl = `/uploads/images/expenses/${file.filename}`;
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+      const blob = await put(`expenses/${filename}`, file.buffer, { access: 'public' });
+      updateDto.attachmentUrl = blob.url;
     }
 
     return this.expensesService.update(id, updateDto);

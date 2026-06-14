@@ -1,20 +1,15 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UseGuards, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname } from 'path';
+import { put } from '@vercel/blob';
 import { MenusService } from './menus.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperadminGuard } from '../auth/guards/superadmin.guard';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 
-const storage = diskStorage({
-  destination: './uploads/images/menus',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-  }
-});
+const storage = memoryStorage();
 
 const parseBoolean = (val: any, defaultVal: boolean): boolean => {
   if (val === undefined) return defaultVal;
@@ -34,7 +29,15 @@ export class MenusController {
   @UseGuards(JwtAuthGuard, SuperadminGuard)
   @UseInterceptors(FilesInterceptor('images', 5, { storage }))
   async create(@Body() createDto: CreateMenuDto, @UploadedFiles() files: Express.Multer.File[]) {
-    const imagePaths = files ? files.map(file => `/uploads/images/menus/${file.filename}`) : [];
+    const imagePaths: string[] = [];
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+        const blob = await put(`menus/${filename}`, file.buffer, { access: 'public' });
+        imagePaths.push(blob.url);
+      }
+    }
     
     const data = {
       name: createDto.name,
@@ -74,7 +77,14 @@ export class MenusController {
     if (updateDto.priceLarge !== undefined) updateData.priceLarge = updateDto.priceLarge ? updateDto.priceLarge.toString() : null;
 
     if (files && files.length > 0) {
-      updateData.images = files.map(file => `/uploads/images/menus/${file.filename}`);
+      const imagePaths: string[] = [];
+      for (const file of files) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+        const blob = await put(`menus/${filename}`, file.buffer, { access: 'public' });
+        imagePaths.push(blob.url);
+      }
+      updateData.images = imagePaths;
     }
 
     return this.menusService.updateMenu(id, updateData);

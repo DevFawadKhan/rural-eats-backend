@@ -1,20 +1,15 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname } from 'path';
+import { put } from '@vercel/blob';
 import { DealsService } from './deals.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperadminGuard } from '../auth/guards/superadmin.guard';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
-const storage = diskStorage({
-  destination: './uploads/images/deals',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-  }
-});
+const storage = memoryStorage();
 
 const parseBoolean = (val: any, defaultVal: boolean): boolean => {
   if (val === undefined) return defaultVal;
@@ -50,7 +45,13 @@ export class DealsController {
   @UseGuards(JwtAuthGuard, SuperadminGuard)
   @UseInterceptors(FileInterceptor('image', { storage }))
   async create(@Body() createDto: CreateDealDto, @UploadedFile() file: Express.Multer.File) {
-    const imagePath = file ? `/uploads/images/deals/${file.filename}` : null;
+    let imagePath: string | null = null;
+    if (file) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+      const blob = await put(`deals/${filename}`, file.buffer, { access: 'public' });
+      imagePath = blob.url;
+    }
     
     const data = {
       name: createDto.name,
@@ -80,7 +81,10 @@ export class DealsController {
     if (updateDto.isActive !== undefined) updateData.isActive = parseBoolean(updateDto.isActive, true);
 
     if (file) {
-      updateData.image = `/uploads/images/deals/${file.filename}`;
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = `${uniqueSuffix}${extname(file.originalname)}`;
+      const blob = await put(`deals/${filename}`, file.buffer, { access: 'public' });
+      updateData.image = blob.url;
     }
 
     const dealItems = updateDto.dealItems !== undefined ? parseDealItems(updateDto.dealItems) : undefined;
