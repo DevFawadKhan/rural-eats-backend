@@ -1,1 +1,0 @@
-ALTER TABLE "expenses" ADD COLUMN "attachment_url" varchar(1024);
