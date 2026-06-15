@@ -5,7 +5,8 @@ import { extname } from 'path';
 import { put } from '@vercel/blob';
 import { MenusService } from './menus.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SuperadminGuard } from '../auth/guards/superadmin.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 
@@ -26,7 +27,8 @@ export class MenusController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Menu')
   @UseInterceptors(FilesInterceptor('images', 5, { storage }))
   async create(@Body() createDto: CreateMenuDto, @UploadedFiles() files: Express.Multer.File[]) {
     const imagePaths: string[] = [];
@@ -56,7 +58,8 @@ export class MenusController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Menu')
   @UseInterceptors(FilesInterceptor('images', 5, { storage }))
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -91,7 +94,8 @@ export class MenusController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Menu')
   async delete(@Param('id', ParseIntPipe) id: number) {
     return this.menusService.deleteMenu(id);
   }

@@ -36,12 +36,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return { id: payload.sub, email: payload.email, role: payload.role };
     } else {
       const user = await db.query.usersTable.findFirst({
-        where: eq(usersTable.id, payload.sub)
+        where: eq(usersTable.id, payload.sub),
+        with: {
+          role: {
+            with: {
+              rolePermissions: {
+                with: {
+                  permission: true
+                }
+              }
+            }
+          }
+        }
       });
       if (!user) {
         throw new UnauthorizedException('User no longer exists');
       }
-      return { id: payload.sub, email: payload.email, role: payload.role };
+      const permissions = user.role?.rolePermissions?.map(rp => rp.permission.name) || [];
+      return { id: payload.sub, email: payload.email, role: payload.role, permissions };
     }
   }
 }

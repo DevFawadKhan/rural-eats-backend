@@ -1,6 +1,6 @@
 import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
-export class UpdateSuperadminDto {
+export class UpdateAdminDto {
   @IsOptional()
   @IsString()
   name?: string;

@@ -1,25 +1,108 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { db } from '../../db';
 import { expensesTable } from '../../db/schema/expenses.schema';
-import { eq, ilike, or, and, gte, lte, sql, SQL } from 'drizzle-orm';
+import { eq, ilike, or, and, gte, lte, sql, SQL, inArray } from 'drizzle-orm';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import * as ExcelJS from 'exceljs';
-import { format } from 'date-fns';
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+} from 'date-fns';
 import { expenseCategoriesTable } from '../../db/schema/expense-categories.schema';
 
 @Injectable()
 export class ExpensesService {
   async create(createDto: CreateExpenseDto) {
     const amountStr = createDto.amount.toString();
-    const result = await db.insert(expensesTable).values({
-      ...createDto,
-      amount: amountStr,
-    }).returning();
+    const result = await db
+      .insert(expensesTable)
+      .values({
+        ...createDto,
+        amount: amountStr,
+      })
+      .returning();
     return result[0];
   }
 
-  async findAll(query: { page?: number; limit?: number; search?: string; startDate?: string; endDate?: string }) {
+  async getStats() {
+    const now = new Date();
+
+    const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
+
+    const today = formatDate(now);
+    const startOfCurrentWeek = formatDate(
+      startOfWeek(now, { weekStartsOn: 1 }),
+    );
+    const endOfCurrentWeek = formatDate(endOfWeek(now, { weekStartsOn: 1 }));
+    const startOfCurrentMonth = formatDate(startOfMonth(now));
+    const endOfCurrentMonth = formatDate(endOfMonth(now));
+    const startOfCurrentYear = formatDate(startOfYear(now));
+    const endOfCurrentYear = formatDate(endOfYear(now));
+
+    const [dailyResult] = await db
+      .select({
+        total: sql<number>`sum(CAST(${expensesTable.amount} AS NUMERIC))`,
+      })
+      .from(expensesTable)
+      .where(eq(expensesTable.expenseDate, today));
+
+    const [weeklyResult] = await db
+      .select({
+        total: sql<number>`sum(CAST(${expensesTable.amount} AS NUMERIC))`,
+      })
+      .from(expensesTable)
+      .where(
+        and(
+          gte(expensesTable.expenseDate, startOfCurrentWeek),
+          lte(expensesTable.expenseDate, endOfCurrentWeek),
+        ),
+      );
+
+    const [monthlyResult] = await db
+      .select({
+        total: sql<number>`sum(CAST(${expensesTable.amount} AS NUMERIC))`,
+      })
+      .from(expensesTable)
+      .where(
+        and(
+          gte(expensesTable.expenseDate, startOfCurrentMonth),
+          lte(expensesTable.expenseDate, endOfCurrentMonth),
+        ),
+      );
+
+    const [yearlyResult] = await db
+      .select({
+        total: sql<number>`sum(CAST(${expensesTable.amount} AS NUMERIC))`,
+      })
+      .from(expensesTable)
+      .where(
+        and(
+          gte(expensesTable.expenseDate, startOfCurrentYear),
+          lte(expensesTable.expenseDate, endOfCurrentYear),
+        ),
+      );
+
+    return {
+      daily: Number(dailyResult?.total || 0),
+      weekly: Number(weeklyResult?.total || 0),
+      monthly: Number(monthlyResult?.total || 0),
+      yearly: Number(yearlyResult?.total || 0),
+    };
+  }
+
+  async findAll(query: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
     const { page = 0, limit = 20, search, startDate, endDate } = query;
     const offset = page * limit;
 
@@ -28,7 +111,14 @@ export class ExpensesService {
     if (search) {
       const searchCondition = or(
         ilike(expensesTable.description, `%${search}%`),
-        ilike(expensesTable.amount, `%${search}%`)
+        sql`CAST(${expensesTable.amount} AS TEXT) ILIKE ${`%${search}%`}`,
+        inArray(
+          expensesTable.categoryId,
+          db
+            .select({ id: expenseCategoriesTable.id })
+            .from(expenseCategoriesTable)
+            .where(ilike(expenseCategoriesTable.name, `%${search}%`)),
+        ),
       );
       if (searchCondition) conditions.push(searchCondition);
     }
@@ -53,28 +143,38 @@ export class ExpensesService {
       offset,
     });
 
-    const totalResult = await db.select({ count: sql<number>`count(*)` })
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
       .from(expensesTable)
       .where(whereClause);
-      
+
     const total = Number(totalResult[0]?.count || 0);
 
     return { data, total };
   }
 
-  async exportReport(query: { search?: string; startDate?: string; endDate?: string; type?: 'csv' | 'excel' }) {
+  async exportReport(query: {
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    type?: 'csv' | 'excel';
+  }) {
     // Fetch all matching data without pagination
     const { data } = await this.findAll({ ...query, page: 0, limit: 1000000 });
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Expenses Report');
 
-    const startStr = query.startDate ? format(new Date(query.startDate), 'MMM dd, yyyy') : 'Beginning';
-    const endStr = query.endDate ? format(new Date(query.endDate), 'MMM dd, yyyy') : 'Today';
-    
+    const startStr = query.startDate
+      ? format(new Date(query.startDate), 'MMM dd, yyyy')
+      : 'Beginning';
+    const endStr = query.endDate
+      ? format(new Date(query.endDate), 'MMM dd, yyyy')
+      : 'Today';
+
     // Top heading
     worksheet.addRow([`Expense Report from ${startStr} to ${endStr}`]);
-    worksheet.addRow([]); 
+    worksheet.addRow([]);
 
     // Headers
     worksheet.addRow(['ID', 'Description', 'Category', 'Amount', 'Date']);
@@ -83,13 +183,13 @@ export class ExpensesService {
     data.forEach((exp) => {
       const amountNum = parseFloat(exp.amount as string) || 0;
       totalExpense += amountNum;
-      
+
       worksheet.addRow([
         exp.id,
         exp.description,
         exp.category?.name || 'Uncategorized',
         amountNum,
-        format(new Date(exp.expenseDate), 'MMM dd, yyyy')
+        format(new Date(exp.expenseDate), 'MMM dd, yyyy'),
       ]);
     });
 
@@ -106,10 +206,19 @@ export class ExpensesService {
     const type = query.type || 'excel';
     if (type === 'csv') {
       const buffer = await workbook.csv.writeBuffer();
-      return { buffer, contentType: 'text/csv', filename: `expenses-report-${Date.now()}.csv` };
+      return {
+        buffer,
+        contentType: 'text/csv',
+        filename: `expenses-report-${Date.now()}.csv`,
+      };
     } else {
       const buffer = await workbook.xlsx.writeBuffer();
-      return { buffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: `expenses-report-${Date.now()}.xlsx` };
+      return {
+        buffer,
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        filename: `expenses-report-${Date.now()}.xlsx`,
+      };
     }
   }
 
@@ -128,17 +237,18 @@ export class ExpensesService {
 
   async update(id: number, updateDto: UpdateExpenseDto) {
     const expense = await this.findOne(id);
-    
+
     const updateData: any = { ...updateDto, updatedAt: new Date() };
     if (updateDto.amount !== undefined) {
       updateData.amount = updateDto.amount.toString();
     }
 
-    const result = await db.update(expensesTable)
+    const result = await db
+      .update(expensesTable)
       .set(updateData)
       .where(eq(expensesTable.id, id))
       .returning();
-      
+
     return result[0];
   }
 

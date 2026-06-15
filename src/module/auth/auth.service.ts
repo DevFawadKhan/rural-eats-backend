@@ -17,7 +17,16 @@ export class AuthService {
 
     // Check internal users first (admins/superadmins)
     const user = await db.query.usersTable.findFirst({
-      where: eq(usersTable.email, email)
+      where: eq(usersTable.email, email),
+      with: { 
+        role: {
+          with: {
+            rolePermissions: {
+              with: { permission: true }
+            }
+          }
+        } 
+      }
     });
     
     if (user) {
@@ -25,7 +34,9 @@ export class AuthService {
       
       if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
-      const payload = { email: user.email, sub: user.id, role: user.role };
+      const roleName = user.role?.name || 'Admin';
+      const permissions = user.role?.rolePermissions?.map(rp => rp.permission.name) || [];
+      const payload = { email: user.email, sub: user.id, role: roleName };
       return {
         message: 'Login successful',
         access_token: this.jwtService.sign(payload),
@@ -33,7 +44,9 @@ export class AuthService {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: roleName,
+          roleId: user.roleId,
+          permissions,
         }
       };
     }

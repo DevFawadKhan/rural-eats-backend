@@ -2,7 +2,8 @@ import { Controller, Get, Patch, Body, UseGuards, Request, Post } from '@nestjs/
 import { CustomersService } from './customers.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CustomerGuard } from '../auth/guards/customer.guard';
-import { SuperadminGuard } from '../auth/guards/superadmin.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Controller('customers')
@@ -27,7 +28,8 @@ export class CustomersController {
   }
 
   @Post('guest')
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Customers')
   async createGuest(@Body() body: { name: string; phoneNumber: string; address?: string; city?: string; email?: string }) {
     return this.customersService.createGuest(body);
   }

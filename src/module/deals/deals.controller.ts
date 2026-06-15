@@ -5,7 +5,8 @@ import { extname } from 'path';
 import { put } from '@vercel/blob';
 import { DealsService } from './deals.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SuperadminGuard } from '../auth/guards/superadmin.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
@@ -42,7 +43,8 @@ export class DealsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Deals')
   @UseInterceptors(FileInterceptor('image', { storage }))
   async create(@Body() createDto: CreateDealDto, @UploadedFile() file: Express.Multer.File) {
     let imagePath: string | null = null;
@@ -67,7 +69,8 @@ export class DealsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Deals')
   @UseInterceptors(FileInterceptor('image', { storage }))
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -93,7 +96,8 @@ export class DealsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, SuperadminGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('Deals')
   async delete(@Param('id', ParseIntPipe) id: number) {
     return this.dealsService.deleteDeal(id);
   }

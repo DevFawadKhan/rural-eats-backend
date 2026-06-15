@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, ParseIntPipe, Query, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+  ParseIntPipe,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { extname } from 'path';
@@ -7,10 +21,15 @@ import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import type { Response } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 
 const storage = memoryStorage();
 
 @Controller('expenses')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@RequirePermissions('Expenses')
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
@@ -21,7 +40,9 @@ export class ExpensesController {
     if (file) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const filename = `${uniqueSuffix}${extname(file.originalname)}`;
-      const blob = await put(`expenses/${filename}`, file.buffer, { access: 'public' });
+      const blob = await put(`expenses/${filename}`, file.buffer, {
+        access: 'public',
+      });
       attachmentUrl = blob.url;
     }
 
@@ -41,13 +62,24 @@ export class ExpensesController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('type') type: 'csv' | 'excel',
-    @Res() res: Response
+    @Res() res: Response,
   ) {
-    const { buffer, contentType, filename } = await this.expensesService.exportReport({ search, startDate, endDate, type });
-    
+    const { buffer, contentType, filename } =
+      await this.expensesService.exportReport({
+        search,
+        startDate,
+        endDate,
+        type,
+      });
+
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
+  }
+
+  @Get('stats/summary')
+  getStats() {
+    return this.expensesService.getStats();
   }
 
   @Get()
@@ -74,19 +106,31 @@ export class ExpensesController {
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('attachment', { storage }))
-  async update(@Param('id', ParseIntPipe) id: number, @Body() body: any, @UploadedFile() file: Express.Multer.File) {
-    const updateDto: UpdateExpenseDto = {};
-    if (body.description !== undefined) updateDto.description = body.description;
-    if (body.amount !== undefined) updateDto.amount = Number(body.amount);
-    if (body.categoryId !== undefined) updateDto.categoryId = Number(body.categoryId);
-    if (body.expenseDate !== undefined) updateDto.expenseDate = body.expenseDate;
-    
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    let attachmentUrl: string | undefined = undefined;
     if (file) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const filename = `${uniqueSuffix}${extname(file.originalname)}`;
-      const blob = await put(`expenses/${filename}`, file.buffer, { access: 'public' });
-      updateDto.attachmentUrl = blob.url;
+      const blob = await put(`expenses/${filename}`, file.buffer, {
+        access: 'public',
+      });
+      attachmentUrl = blob.url;
     }
+
+    const updateDto: UpdateExpenseDto = {};
+    if (body.description !== undefined)
+      updateDto.description = body.description;
+    if (body.amount !== undefined) updateDto.amount = Number(body.amount);
+    if (body.categoryId !== undefined)
+      updateDto.categoryId = Number(body.categoryId);
+    if (body.expenseDate !== undefined)
+      updateDto.expenseDate = body.expenseDate;
+    if (attachmentUrl !== undefined)
+      updateDto.attachmentUrl = attachmentUrl;
 
     return this.expensesService.update(id, updateDto);
   }
