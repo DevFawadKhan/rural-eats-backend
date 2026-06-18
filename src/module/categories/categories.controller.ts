@@ -8,11 +8,11 @@ import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
-@RequirePermissions('Categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @RequirePermissions('Categories')
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
@@ -28,11 +28,13 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @RequirePermissions('Categories')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateCategoryDto: UpdateCategoryDto) {
     return this.categoriesService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
+  @RequirePermissions('Categories')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.remove(id);
   }

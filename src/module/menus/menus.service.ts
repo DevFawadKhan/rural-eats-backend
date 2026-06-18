@@ -18,6 +18,19 @@ export class MenusService {
     });
   }
 
+  async getMenuById(id: number) {
+    const menu = await db.query.menusTable.findFirst({
+      where: eq(menusTable.id, id),
+      with: {
+        category: true,
+      }
+    });
+    if (!menu) {
+      throw new NotFoundException('Menu item not found');
+    }
+    return menu;
+  }
+
   async updateMenu(id: number, data: Partial<typeof menusTable.$inferInsert>) {
     const [updatedMenu] = await db.update(menusTable)
       .set({ ...data, updatedAt: new Date() })

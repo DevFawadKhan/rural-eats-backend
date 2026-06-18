@@ -26,6 +26,11 @@ export class MenusController {
     return this.menusService.getAllMenus();
   }
 
+  @Get(':id')
+  async getOne(@Param('id', ParseIntPipe) id: number) {
+    return this.menusService.getMenuById(id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions('Menu')
