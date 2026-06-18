@@ -13,7 +13,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
     const result = await this.authService.login(loginDto);
     this.setCookie(response, result.access_token);
-    return { message: result.message, user: result.user };
+    return { message: result.message, user: result.user, access_token: result.access_token };
   }
 
   @HttpCode(HttpStatus.OK)
@@ -31,7 +31,7 @@ export class AuthController {
   async customerSignup(@Body() dto: CustomerSignupDto, @Res({ passthrough: true }) response: Response) {
     const result = await this.authService.customerSignup(dto);
     this.setCookie(response, result.access_token);
-    return { message: result.message, user: result.user };
+    return { message: result.message, user: result.user, access_token: result.access_token };
   }
 
   private setCookie(response: Response, token: string) {
