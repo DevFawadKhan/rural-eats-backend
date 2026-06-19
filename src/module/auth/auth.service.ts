@@ -7,10 +7,14 @@ import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { CustomerSignupDto } from './dto/customer-signup.dto';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private logsService: LogsService
+  ) {}
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
@@ -37,6 +41,9 @@ export class AuthService {
       const roleName = user.role?.name || 'Admin';
       const permissions = user.role?.rolePermissions?.map(rp => rp.permission.name) || [];
       const payload = { email: user.email, sub: user.id, role: roleName };
+      
+      await this.logsService.createLog('Admin logged in', {}, user.id, null);
+
       return {
         message: 'Login successful',
         access_token: this.jwtService.sign(payload),
@@ -65,6 +72,9 @@ export class AuthService {
       if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
       const payload = { email: customer.email, sub: customer.id, role: 'customer' };
+
+      await this.logsService.createLog('Logged in successfully', {}, null, customer.id);
+
       return {
         message: 'Login successful',
         access_token: this.jwtService.sign(payload),
@@ -106,6 +116,8 @@ export class AuthService {
     const customer = newCustomer[0];
     const payload = { email: customer.email, sub: customer.id, role: 'customer' };
     
+    await this.logsService.createLog('Account created', {}, null, customer.id);
+
     return {
       message: 'Customer registered successfully',
       access_token: this.jwtService.sign(payload),

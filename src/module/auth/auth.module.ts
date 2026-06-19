@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { LogsModule } from '../logs/logs.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +12,7 @@ dotenv.config();
 @Module({
   imports: [
     PassportModule,
+    LogsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: process.env.JWT_EXPIRATION! as any },
