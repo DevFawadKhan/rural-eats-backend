@@ -84,6 +84,8 @@ export class AuthService {
           email: customer.email,
           role: 'customer',
           city: customer.city,
+          address: customer.address,
+          phoneNumber: customer.phoneNumber,
         }
       };
     }
@@ -128,6 +130,8 @@ export class AuthService {
         email: customer.email,
         role: 'customer',
         city: customer.city,
+        address: customer.address,
+        phoneNumber: customer.phoneNumber,
       }
     };
   }
