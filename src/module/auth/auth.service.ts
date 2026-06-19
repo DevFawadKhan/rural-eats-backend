@@ -83,6 +83,7 @@ export class AuthService {
           name: customer.name,
           email: customer.email,
           role: 'customer',
+          city: customer.city,
         }
       };
     }
@@ -126,6 +127,7 @@ export class AuthService {
         name: customer.name,
         email: customer.email,
         role: 'customer',
+        city: customer.city,
       }
     };
   }
