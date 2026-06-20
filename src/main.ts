@@ -6,16 +6,18 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
+
   // Enable cookie parsing
   app.use(cookieParser());
-  
+
   // Enable runtime validation globally
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
-  
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+
   // Enable CORS
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -24,7 +26,7 @@ async function bootstrap() {
 
   // Set global API prefix
   app.setGlobalPrefix('api');
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

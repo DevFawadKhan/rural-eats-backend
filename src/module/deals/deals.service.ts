@@ -37,6 +37,23 @@ export class DealsService {
     });
   }
 
+  async getDealById(id: number) {
+    const deal = await db.query.dealsTable.findFirst({
+      where: eq(dealsTable.id, id),
+      with: {
+        dealItems: {
+          with: {
+            menu: true
+          }
+        }
+      }
+    });
+    if (!deal) {
+      throw new NotFoundException('Deal not found');
+    }
+    return deal;
+  }
+
   async updateDeal(id: number, data: any, dealItems?: { menuId: number, size: string | null }[]) {
     return db.transaction(async (tx) => {
       // Update basic fields if any

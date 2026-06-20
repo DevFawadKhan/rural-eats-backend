@@ -14,11 +14,12 @@ import { SettingsModule } from './module/settings/settings.module';
 import { RolesModule } from './module/roles/roles.module';
 import { LogsModule } from './module/logs/logs.module';
 import { DashboardModule } from './module/dashboard/dashboard.module';
+import { ChatModule } from './module/chat/chat.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 
 @Module({
-  imports: [AdminModule, AuthModule, CustomersModule, MenusModule, CategoriesModule, DealsModule, ExpenseCategoriesModule, ExpensesModule, OrdersModule, SettingsModule, RolesModule, LogsModule, DashboardModule],
+  imports: [AdminModule, AuthModule, CustomersModule, MenusModule, CategoriesModule, DealsModule, ExpenseCategoriesModule, ExpensesModule, OrdersModule, SettingsModule, RolesModule, LogsModule, DashboardModule, ChatModule],
   controllers: [AppController],
   providers: [
     AppService,

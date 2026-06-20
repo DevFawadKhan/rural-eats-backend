@@ -42,6 +42,11 @@ export class DealsController {
     return this.dealsService.getAllDeals();
   }
 
+  @Get(':id')
+  async getOne(@Param('id', ParseIntPipe) id: number) {
+    return this.dealsService.getDealById(id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions('Deals')

@@ -10,10 +10,9 @@ export class CreateDealDto {
   @IsOptional()
   description?: string;
 
-  @Type(() => Number)
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  price!: number;
+  price!: string;
 
   @IsOptional()
   isActive?: string | boolean;

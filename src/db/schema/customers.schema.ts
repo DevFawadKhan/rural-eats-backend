@@ -15,6 +15,9 @@ export const customersTable = pgTable('customers', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+import { messagesTable } from './messages.schema';
+
 export const customersRelations = relations(customersTable, ({ many }) => ({
   orders: many(ordersTable),
+  messages: many(messagesTable),
 }));

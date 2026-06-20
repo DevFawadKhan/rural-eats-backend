@@ -15,6 +15,20 @@
       "when": 1781884224802,
       "tag": "0001_melodic_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781956948109,
+      "tag": "0002_worthless_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781956988508,
+      "tag": "0003_sudden_mantis",
+      "breakpoints": true
     }
   ]
 }
