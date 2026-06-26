@@ -8,6 +8,7 @@ export const ordersTable = pgTable('orders', {
   id: serial('id').primaryKey(),
   customerId: integer('customer_id').notNull().references(() => customersTable.id),
   status: varchar('status', { length: 50 }).default('pending').notNull(),
+  paymentMethod: varchar('payment_method', { length: 50 }).default('COD').notNull(),
   totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
   isTakeaway: boolean('is_takeaway').default(false).notNull(),
   createdByUserId: integer('created_by_user_id').references(() => usersTable.id),

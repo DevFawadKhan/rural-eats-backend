@@ -40,6 +40,7 @@ export class OrdersService {
         customerId,
         totalAmount: createDto.totalAmount.toString(),
         status: 'pending',
+        paymentMethod: createDto.paymentMethod || 'COD',
         isTakeaway: createDto.isTakeaway || false,
       }).returning();
       orderId = result[0].id;

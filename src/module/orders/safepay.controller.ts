@@ -21,15 +21,25 @@ export class SafepayController {
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
     @Body() body: any,
+    @Headers() allHeaders: any,
     @Headers('x-sfpy-signature') sfpySig?: string,
     @Headers('x-safepay-signature') safepaySig?: string,
   ) {
+    this.logger.log(
+      `Received Safepay webhook headers: ${JSON.stringify(allHeaders)}`,
+    );
     this.logger.log(
       `Received Safepay webhook payload: ${JSON.stringify(body)}`,
     );
 
     const webhookSecret = process.env.SAFEPAY_WEBHOOK_SECRET;
-    const signature = sfpySig || safepaySig || body?.sig || body?.signature;
+    const signature =
+      sfpySig ||
+      safepaySig ||
+      allHeaders?.['x-sfpy-sig'] ||
+      allHeaders?.['sfpy-signature'] ||
+      body?.sig ||
+      body?.signature;
 
     // Optional signature verification if secret is set and signature is provided
     if (webhookSecret && signature && typeof body === 'object') {
@@ -88,11 +98,12 @@ export class SafepayController {
     if (reference && isPaid) {
       const orderId = parseInt(reference.toString(), 10);
       if (!isNaN(orderId)) {
-        this.logger.log(`Updating order #${orderId} status to 'paid'`);
+        const paymentChannel = body?.payment_method || body?.provider || body?.metadata?.channel || body?.data?.payment_method || 'Safepay Online';
+        this.logger.log(`Updating order #${orderId} status to 'Confirmed' via ${paymentChannel}`);
         try {
           await db
             .update(ordersTable)
-            .set({ status: 'paid', updatedAt: new Date() })
+            .set({ status: 'Confirmed', paymentMethod: paymentChannel.toString(), updatedAt: new Date() })
             .where(eq(ordersTable.id, orderId));
 
           await db.insert(logsTable).values({
@@ -100,6 +111,7 @@ export class SafepayController {
             details: {
               orderId,
               provider: 'safepay',
+              status: 'Confirmed',
               tracker: body?.tracker || body?.data?.tracker,
             },
           });

@@ -3,11 +3,12 @@ import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { SafepayController } from './safepay.controller';
 import { GuestOrdersController } from './guest-orders.controller';
+import { PaymentsController } from './payments.controller';
 import { CustomersModule } from '../customers/customers.module';
 
 @Module({
   imports: [CustomersModule],
-  controllers: [OrdersController, SafepayController, GuestOrdersController],
+  controllers: [OrdersController, SafepayController, GuestOrdersController, PaymentsController],
   providers: [OrdersService],
 })
 export class OrdersModule {}

@@ -57,6 +57,10 @@ export class CreateOrderDto {
   @IsOptional()
   @IsBoolean()
   isTakeaway?: boolean;
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
 }
 
 export class UpdateOrderDto {
