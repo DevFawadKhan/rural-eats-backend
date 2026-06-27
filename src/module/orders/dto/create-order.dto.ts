@@ -78,7 +78,7 @@ export class CreateOrderDto {
 export class UpdateOrderDto {
   @IsOptional()
   @IsString()
-  @IsIn(['pending', 'Confirmed', 'Delivered', 'Cancelled'])
+  @IsIn(['pending', 'Confirmed', 'Delivered', 'Cancelled', 'confirmed', 'delivered', 'cancelled', 'Pending'])
   status?: string;
 
   @IsOptional()
