@@ -42,6 +42,10 @@ export class OrdersService {
         status: 'pending',
         paymentMethod: createDto.paymentMethod || 'COD',
         isTakeaway: createDto.isTakeaway || false,
+        specialInstructions: createDto.specialInstructions || null,
+        landmark: createDto.landmark || null,
+        whatsappNumber: createDto.customerInfo.whatsappNumber || null,
+        deliveryAddress: createDto.customerInfo.address || null,
       }).returning();
       orderId = result[0].id;
     } catch (error) {
@@ -57,6 +61,7 @@ export class OrdersService {
         dealId: item.dealId || null,
         quantity: item.quantity,
         unitPrice: item.unitPrice.toString(),
+        size: item.size || null,
       }));
 
       await db.insert(orderItemsTable).values(itemsToInsert);
@@ -175,7 +180,7 @@ export class OrdersService {
         id: o.id,
         customer: o.customer?.name || 'Unknown',
         phone: o.customer?.phoneNumber || '',
-        type: o.isTakeaway ? 'Takeaway' : 'Dine-in',
+        type: o.isTakeaway ? 'Takeaway' : 'Delivery',
         amount: parseFloat(o.totalAmount),
         status: o.status,
         date: format(new Date(o.createdAt), 'dd MMM yyyy, hh:mm a'),
@@ -219,11 +224,15 @@ export class OrdersService {
       throw new BadRequestException('Order not found');
     }
 
-    // Update status, totalAmount, isTakeaway
+    // Update status, totalAmount, isTakeaway, specialInstructions, landmark
     const updateData: any = {};
     if (updateDto.status) updateData.status = updateDto.status;
     if (updateDto.totalAmount !== undefined) updateData.totalAmount = updateDto.totalAmount.toString();
     if (updateDto.isTakeaway !== undefined) updateData.isTakeaway = updateDto.isTakeaway;
+    if (updateDto.specialInstructions !== undefined) updateData.specialInstructions = updateDto.specialInstructions;
+    if (updateDto.landmark !== undefined) updateData.landmark = updateDto.landmark;
+    if (updateDto.customerInfo?.whatsappNumber !== undefined) updateData.whatsappNumber = updateDto.customerInfo.whatsappNumber;
+    if (updateDto.customerInfo?.address !== undefined) updateData.deliveryAddress = updateDto.customerInfo.address;
     
     if (Object.keys(updateData).length > 0) {
       await db.update(ordersTable).set({ ...updateData, updatedAt: new Date() }).where(eq(ordersTable.id, id));
@@ -252,6 +261,7 @@ export class OrdersService {
         dealId: item.dealId || null,
         quantity: item.quantity,
         unitPrice: item.unitPrice.toString(),
+        size: item.size || null,
       }));
       await db.insert(orderItemsTable).values(itemsToInsert);
     }

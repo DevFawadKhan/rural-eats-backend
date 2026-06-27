@@ -19,6 +19,10 @@ export class OrderCustomerInfoDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsappNumber?: string;
 }
 
 export class OrderItemInputDto {
@@ -61,6 +65,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  specialInstructions?: string;
+
+  @IsOptional()
+  @IsString()
+  landmark?: string;
 }
 
 export class UpdateOrderDto {
@@ -87,4 +99,12 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsBoolean()
   isTakeaway?: boolean;
+
+  @IsOptional()
+  @IsString()
+  specialInstructions?: string;
+
+  @IsOptional()
+  @IsString()
+  landmark?: string;
 }

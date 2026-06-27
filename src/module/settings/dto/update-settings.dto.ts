@@ -16,4 +16,12 @@ export class UpdateSettingsDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  whatsappNumber?: string;
 }

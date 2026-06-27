@@ -12,4 +12,5 @@ export * from './expenses.schema';
 export * from './roles.schema';
 export * from './role-permissions.schema';
 export * from './settings.schema';
+export * from './carousel-slides.schema';
 export * from './messages.schema';

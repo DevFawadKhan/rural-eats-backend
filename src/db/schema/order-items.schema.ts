@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, numeric } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, numeric, varchar } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { ordersTable } from './orders.schema';
 import { menusTable } from './menus.schema';
@@ -11,6 +11,7 @@ export const orderItemsTable = pgTable('order_items', {
   dealId: integer('deal_id').references(() => dealsTable.id),
   quantity: integer('quantity').notNull().default(1),
   unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+  size: varchar('size', { length: 50 }),
 });
 
 export const orderItemsRelations = relations(orderItemsTable, ({ one }) => ({

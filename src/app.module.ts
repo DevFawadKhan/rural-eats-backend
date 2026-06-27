@@ -15,11 +15,12 @@ import { RolesModule } from './module/roles/roles.module';
 import { LogsModule } from './module/logs/logs.module';
 import { DashboardModule } from './module/dashboard/dashboard.module';
 import { ChatModule } from './module/chat/chat.module';
+import { CarouselModule } from './module/carousel/carousel.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 
 @Module({
-  imports: [AdminModule, AuthModule, CustomersModule, MenusModule, CategoriesModule, DealsModule, ExpenseCategoriesModule, ExpensesModule, OrdersModule, SettingsModule, RolesModule, LogsModule, DashboardModule, ChatModule],
+  imports: [AdminModule, AuthModule, CustomersModule, MenusModule, CategoriesModule, DealsModule, ExpenseCategoriesModule, ExpensesModule, OrdersModule, SettingsModule, RolesModule, LogsModule, DashboardModule, ChatModule, CarouselModule],
   controllers: [AppController],
   providers: [
     AppService,
