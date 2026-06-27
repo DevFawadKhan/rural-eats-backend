@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import * as schema from './schema';
 
 dotenv.config();
+process.env.TZ = process.env.APP_TIMEZONE || 'Asia/Karachi';
 
 // Load CA certificate (Aiven SSL)
 const caCert = process.env.DB_CA?.replace(/\\n/g, '\n');
