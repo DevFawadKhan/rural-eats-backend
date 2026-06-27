@@ -195,9 +195,17 @@ export class OrdersService {
         orderItems: {
           with: {
             menu: true,
-            deal: true,
-          }
-        }
+            deal: {
+              with: {
+                dealItems: {
+                  with: {
+                    menu: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: [desc(ordersTable.createdAt)],
     });
@@ -211,10 +219,18 @@ export class OrdersService {
         orderItems: {
           with: {
             menu: true,
-            deal: true,
-          }
-        }
-      }
+            deal: {
+              with: {
+                dealItems: {
+                  with: {
+                    menu: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
